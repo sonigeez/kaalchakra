@@ -390,3 +390,15 @@ body.intro-on .band-side, body.intro-on .yearbox, body.intro-on .legend, body.in
 @keyframes chakrafill { from { transform: scale(.6); opacity: 0; } }
 @keyframes spin { from { transform: rotate(-180deg); } }
 .btn:active, .primary:active, .play:active { transform: scale(.97); }
+
+/* ---------- journey card: controls never move between stops */
+.card.stay { animation: none; }
+.card.journey { display: flex; flex-direction: column; min-height: 430px; }
+.card.journey .jbody { flex: 1; }
+.card.journey .jfoot { margin-top: auto; }
+.card.journey h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#jnext { min-width: 148px; justify-content: center; }
+.card.journey .jbody .fact { animation: stepin .3s var(--ease); }
+.card.journey h2 { animation: stepin .3s var(--ease); }
+@keyframes stepin { from { opacity: 0; transform: translateY(4px); } }
+@media (max-width: 759px) { .card.journey { min-height: 0; } }

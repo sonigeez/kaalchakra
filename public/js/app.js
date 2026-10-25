@@ -593,7 +593,8 @@ addEventListener('keydown', e => {
 const card = $('#card');
 function showCard(html, cls) {
   if (state.focusPolity && cls !== 'polity') { state.focusPolity = null; setHover(null); }
-  card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false; card.scrollTop = 0;
+  const stay = !card.hidden && cls && card.classList.contains(cls);   // same kind of card: update in place, no entrance replay
+  card.className = 'card ' + (cls || '') + (stay ? ' stay' : ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false; card.scrollTop = 0;
   card.querySelector('.x').onclick = closeCard;
   document.body.classList.add('has-card');
 }
@@ -693,14 +694,14 @@ function goStep(i) {
     <div class="kicker">${esc(j.who)} · ${esc(j.title)}</div>
     <h2>${esc(place)}</h2>
     <p class="sub">${esc(fmtY(y))}${ruler ? ` · in the <b class="pname" style="--c:${ruler.color}">${esc(ruler.name)}</b>` : ''}</p>
-    <p class="fact big">${esc(text)}</p>
-    ${j.note && i === 0 ? `<p class="note">${esc(j.note)}</p>` : ''}
-    <div class="dots">${j.stops.map((s, k) => `<button data-k="${k}" class="${k === i ? 'on' : k < i ? 'past' : ''}" aria-label="Stop ${k + 1}"></button>`).join('')}<span class="stopn">Stop ${i + 1} of ${j.stops.length}</span></div>
+    <div class="jbody"><p class="fact big">${esc(text)}</p>
+    ${j.note && i === 0 ? `<p class="note">${esc(j.note)}</p>` : ''}</div>
+    <div class="jfoot"><div class="dots">${j.stops.map((s, k) => `<button data-k="${k}" class="${k === i ? 'on' : k < i ? 'past' : ''}" aria-label="Stop ${k + 1}"></button>`).join('')}<span class="stopn">Stop ${i + 1} of ${j.stops.length}</span></div>
     <div class="row">
       <button class="btn ghost" id="jprev" ${i === 0 ? 'disabled' : ''}>← Back</button>
       <button class="btn" id="jnext">${i === j.stops.length - 1 ? 'Finish' : 'Next stop →'}</button>
       <button class="btn ghost icon" id="jshare" aria-label="Share">↗</button>
-    </div>`, 'journey');
+    </div></div>`, 'journey');
   card.querySelectorAll('[data-k]').forEach(b => b.onclick = () => goStep(+b.dataset.k));
   $('#jprev').onclick = () => goStep(i - 1);
   $('#jnext').onclick = () => i === j.stops.length - 1 ? (closeCard(), flyHome()) : goStep(i + 1);
