@@ -30,11 +30,11 @@ npm run deploy
 
 ## What's in it
 
-- **Timeline.** 119 powers, from the Harappans and Mauryas to the Marathas, Sikhs and the Company. Press ▶ to watch the whole sweep in about 75 seconds.
-- **Painted territories.** Each patch of land goes to the strongest nearby power, and every power is traced into one watercolour region with a pigment edge. When the year changes, conquests spread outward from each power's homeland like ink. Borders are schematic, and ≈ marks uncertain extents. Land inside the atlas that no mapped power held is hatched and labelled "Local chiefdoms", so a gap reads as history rather than a missing tile.
-- **Who ruled your city?** Search about 200 cities and towns, or old names like Pataliputra or Bombay, or use your location. You get every power that held that ground, the longest rule, how often it changed hands, and a 1080×1350 image card to share. It uses the same scoring that paints the map, so the card always agrees with what you see.
+- **Timeline.** 288 powers and archaeological cultures, from the Harappans, Jorwe and Painted Grey Ware cultures to the Nayakas, the Maratha houses, the Sikhs and the Company. Press ▶ to watch the whole sweep in about 75 seconds.
+- **Painted territories.** Each patch of land goes to the strongest nearby power, and every power is traced into one watercolour region with a pigment edge. When the year changes, conquests spread outward from each power's homeland like ink. Borders are schematic, and ≈ marks uncertain extents. Land inside the atlas that no mapped power held is hatched and labelled "Local chiefdoms", so a gap reads as history rather than a missing tile. In the far south before 300 BCE it reads "Megalithic chiefdoms".
+- **Who ruled your city?** Search about 450 cities and towns, or old names like Pataliputra or Bombay, or use your location. You get every power that held that ground, the longest rule, how often it changed hands, and a 1080×1350 image card to share. It uses the same scoring that paints the map, so the card always agrees with what you see.
 - **Living place names.** City labels change as you scrub: Pataliputra to Patna to Azimabad, Dhillika to Dilli to Shahjahanabad. Tap a city to trace its names and events.
-- **Journeys.** Eight travellers: the Buddha, Alexander, Ashoka's edicts, Xuanzang, Adi Shankara, Ibn Battuta, Guru Nanak and Shivaji.
+- **Journeys.** Seventeen journeys, including the Buddha, Alexander, Megasthenes, Faxian, Xuanzang, Rajendra Chola's march to the Ganga, Zheng He, Vasco da Gama, Babur, Akbar, Banda Singh Bahadur and the uprising of 1857.
 - **Daily quiz.** Find five historic places on an unlabelled map. Results share as emoji, Wordle-style.
 - **Deep links.** `#y=1030`, `#y=1030&p=thanjavur`, `#home=indore`, `#j=xuanzang&s=7` and `#quiz` all open straight to that view.
 
@@ -51,8 +51,9 @@ npm run deploy
 | `css/style.css` | All styling, including the phone layout |
 | `worker/index.js` | Cloudflare Worker: preview tags and images |
 | `scripts/build-og-data.mjs` | Precomputes data for link previews |
+| `scripts/check-data.mjs` | Validates the data and reports coverage |
 
-To fix a date or an extent, edit the data files. A phase like `[1601,1636,'+ khandesh vidarbha']` means "the previous phase plus these regions".
+To fix a date or an extent, edit the data files, then run `node scripts/check-data.mjs`. It checks for unknown region keys, duplicate ids and quiz cities that don't exist in their quiz year, and lists core regions no power holds in each era. Add `--cities=delhi,madurai` to print who ruled those towns. A phase like `[1601,1636,'+ khandesh vidarbha']` means "the previous phase plus these regions".
 
 ## Caveats
 
