@@ -77,7 +77,7 @@ const chiefHatch = defs.append('pattern').attr('id', 'chiefHatch').attr('width',
   .attr('patternTransform', 'rotate(45)');
 chiefHatch.append('path').attr('d', 'M0 0V6').attr('stroke', '#4d463d').attr('stroke-width', .8).attr('opacity', .32);
 const hatch = defs.append('pattern').attr('id', 'hatch').attr('width', 6).attr('height', 4).attr('patternUnits', 'userSpaceOnUse');
-hatch.append('path').attr('d', 'M0 .5H6').attr('stroke', '#5f7c8c').attr('stroke-width', .5).attr('opacity', .35);
+hatch.append('path').attr('d', 'M0 .5H6').attr('stroke', '#7d97a4').attr('stroke-width', .5).attr('opacity', .35);
 svg.append('rect').attr('class', 'sea-hatch').attr('fill', 'url(#hatch)').attr('pointer-events', 'none');
 const gMap = svg.append('g');
 const gGrat = gMap.append('path').attr('class', 'graticule');
@@ -921,7 +921,7 @@ async function drawHomeImage(h) {
   const c = cv.getContext('2d'), H = h.hist;
   await Promise.all(['600 120px Eczar', '30px "IM Fell English SC"', '500 24px "IBM Plex Mono"', '30px "Source Serif 4"', '600 30px "Source Serif 4"']
     .map(f => document.fonts.load(f).catch(() => {})));
-  const INK = '#1f1b16', INK2 = '#4d463d', INK3 = '#6f665a', PAPER = '#f2ece0', ACC = '#c8361f', RULE = 'rgba(31,27,22,.55)';
+  const INK = '#1c1a17', INK2 = '#4a4540', INK3 = '#6b655d', PAPER = '#fbfaf6', ACC = '#c8361f', RULE = 'rgba(28,26,23,.35)';
   c.fillStyle = PAPER; c.fillRect(0, 0, W, Hh);
   c.strokeStyle = INK; c.lineWidth = 2; c.strokeRect(36, 36, W - 72, Hh - 72);
   c.lineWidth = 1; c.strokeRect(44, 44, W - 88, Hh - 88);
@@ -942,7 +942,7 @@ async function drawHomeImage(h) {
   // mini map
   const mx0 = 600, my0 = 410, mx1 = W - 84, my1 = 770;
   c.save(); c.beginPath(); c.rect(mx0, my0, mx1 - mx0, my1 - my0); c.clip();
-  c.fillStyle = '#dde3df'; c.fillRect(mx0, my0, mx1 - mx0, my1 - my0);
+  c.fillStyle = '#e3eaed'; c.fillRect(mx0, my0, mx1 - mx0, my1 - my0);
   c.strokeStyle = 'rgba(95,124,140,.3)'; c.lineWidth = 1;
   for (let yy = my0; yy < my1; yy += 7) { c.beginPath(); c.moveTo(mx0, yy + .5); c.lineTo(mx1, yy + .5); c.stroke(); }
   const pj = d3.geoMercator().fitExtent([[mx0 + 14, my0 + 14], [mx1 - 14, my1 - 14]], { type: 'MultiPoint', coordinates: [[66, 6.5], [93, 35.5]] });
@@ -957,7 +957,7 @@ async function drawHomeImage(h) {
   // time strip
   const sx0 = 84, sx1 = W - 84, sy = 830, sh = 56, X = y => sx0 + y2p(y) * (sx1 - sx0);
   c.fillStyle = INK3; c.font = '500 22px "IBM Plex Mono"'; c.fillText('WHO HELD IT, YEAR BY YEAR', sx0, sy - 16);
-  c.fillStyle = '#e6dfd0'; c.fillRect(sx0, sy, sx1 - sx0, sh);
+  c.fillStyle = '#eeebe3'; c.fillRect(sx0, sy, sx1 - sx0, sh);
   H.ruled.forEach(r => { c.fillStyle = PL[r.pi].color; c.fillRect(X(r.from), sy, Math.max(2, X(Math.min(r.to, MAX)) - X(r.from)), sh); });
   c.strokeStyle = INK; c.lineWidth = 1.5; c.strokeRect(sx0, sy, sx1 - sx0, sh);
   c.fillStyle = INK3; c.font = '20px "IBM Plex Mono"';
