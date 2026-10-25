@@ -331,6 +331,7 @@ function traceUnclaimed(withLabels) {
   let labels = G.unclaimed && !withLabels ? G.unclaimed.labels : [];
   if (withLabels) {
     const depth = Float32Array.from(v), comp = new Int32Array(n).fill(-1);
+    const south = Math.floor((projection([78, 16])[1] - y0) / cell);   // label the far south (below 16°N) on its own
     d3.blur2({ data: depth, width: w, height: h }, 5);
     labels = [];
     for (let i = 0; i < n; i++) {
@@ -340,7 +341,7 @@ function traceUnclaimed(withLabels) {
       while (q.length) {
         const j = q.pop(), x = j % w; size++;
         if (depth[j] > depth[best]) best = j;
-        for (const k of [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, j - w, j + w])
+        for (const k of [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, j - w, j + w].filter(k => (k / w | 0) < south === (j / w | 0) < south))
           if (k >= 0 && k < n && v[k] && comp[k] < 0) { comp[k] = id; q.push(k); }
       }
       labels.push({ n: size, depth: depth[best], x: x0 + (best % w + .5) * cell, y: y0 + ((best / w | 0) + .5) * cell });
@@ -394,7 +395,8 @@ function polLabelData() {
     const areaPx = L.n * G.cell * G.cell * T.k * T.k;
     if (areaPx < 14000 || L.depth < .75) return;
     const [x, y] = T.apply([L.x, L.y]), size = 12.5;
-    const label = state.year < -600 ? 'Village cultures' : 'Local chiefdoms';
+    const label = state.year >= -1200 && state.year < -300 && L.y > projection([78, 16])[1] ? 'Megalithic chiefdoms'   // the far south before the Tamil kingdoms
+      : state.year < -600 ? 'Village cultures' : 'Local chiefdoms';
     const w = label.length * size * .5, h = size * 1.3, box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2];
     if (placed.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) return;
     placed.push(box);
