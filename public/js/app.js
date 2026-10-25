@@ -522,14 +522,33 @@ function buildTimeline() {
   const track = ui.track;
   const frac = e => { const r = track.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
   let dragFrac = null, dragRaf = 0;
-  const applyDrag = () => { dragRaf = 0; if (dragFrac === null) return; setYear(p2y(dragFrac)); ui.handle.style.left = dragFrac * 100 + '%'; };
+  let lastCentury = null, lastEra = null;
+  const bubble = $('#hbubble');
+  const applyDrag = () => {
+    dragRaf = 0; if (dragFrac === null) return;
+    const w = track.getBoundingClientRect().width;
+    let f = dragFrac, y = p2y(f), snapped = null;
+    // era snap: within 7px of an era boundary, settle on it
+    for (const e of KC.eras) if (e[0] > MIN && Math.abs((y2p(e[0]) - f) * w) < 7) { f = y2p(e[0]); y = e[0]; snapped = e; break; }
+    setYear(y); ui.handle.style.left = f * 100 + '%';
+    const top = activeAt(state.year)[0];
+    bubble.innerHTML = `<b>${esc(fmtY(state.year))}</b>${top ? `<span><i style="background:${top.p.color}"></i>${esc(top.p.name)}</span>` : ''}`;
+    bubble.style.left = f * 100 + '%';
+    const era = KC.eras.find(e => inR(state.year, e[0], e[1]));
+    if (snapped && lastEra !== snapped[2]) { bubble.classList.remove('flash'); void bubble.offsetWidth; bubble.classList.add('flash'); bubble.dataset.era = ERA_HI[snapped[2]] || snapped[2]; }
+    lastEra = snapped ? snapped[2] : null;
+    // a light tick at each century boundary, where the device supports it
+    const c = Math.floor(state.year / 100);
+    if (lastCentury !== null && c !== lastCentury && navigator.vibrate) navigator.vibrate(4);
+    lastCentury = c;
+  };
   track.addEventListener('pointerdown', e => {
     if (state.mode === 'quiz') return;
     e.preventDefault();
     stopPlay(); track.setPointerCapture(e.pointerId); track.classList.add('drag'); dragging = true;
     dragFrac = frac(e); applyDrag();
     const mv = ev => { dragFrac = frac(ev); if (!dragRaf) dragRaf = requestAnimationFrame(applyDrag); };
-    const up = () => { dragging = false; dragFrac = null; track.classList.remove('drag'); track.removeEventListener('pointermove', mv); track.removeEventListener('pointerup', up); track.removeEventListener('pointercancel', up); };
+    const up = () => { dragging = false; dragFrac = null; lastCentury = null; track.classList.remove('drag'); track.removeEventListener('pointermove', mv); track.removeEventListener('pointerup', up); track.removeEventListener('pointercancel', up); };
     track.addEventListener('pointermove', mv); track.addEventListener('pointerup', up); track.addEventListener('pointercancel', up);
   });
 }
@@ -573,6 +592,7 @@ addEventListener('keydown', e => {
 // ---------- cards
 const card = $('#card');
 function showCard(html, cls) {
+  if (state.focusPolity && cls !== 'polity') { state.focusPolity = null; setHover(null); }
   card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false; card.scrollTop = 0;
   card.querySelector('.x').onclick = closeCard;
   document.body.classList.add('has-card');
@@ -582,7 +602,9 @@ function closeCard() {
   card.hidden = true; document.body.classList.remove('has-card');
   if (state.mode === 'journey') endJourney();
   if (state.mode === 'quiz') endQuiz();
-  state.place = null; state.home = null; renderOverlay(); writeHash();
+  state.place = null; state.home = null;
+  if (state.focusPolity) { state.focusPolity = null; setHover(null); }
+  renderOverlay(); writeHash();
 }
 
 function openPlace(id) {
@@ -622,6 +644,8 @@ function eventsOf(p) {
 const MAP_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5l4-1.5 5 1.5 4-1.5v10.5l-4 1.5-5-1.5-4 1.5zM5.5 2v10.5M10.5 3.5V14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 function openPolity(id) {
   const p = KC.polities.find(p => p.id === id), y = state.year;
+  setHover(id); state.focusPolity = id;
+  gPol.selectAll('g.pol').filter(d => d.p.id === id).classed('pulse-once', false).each(function () { void this.getBBox(); }).classed('pulse-once', true);
   const peak = p.phases.reduce((a, b) => areaOf(b.regions) > areaOf(a.regions) ? b : a);
   const evs = eventsOf(p), cur = [...evs].reverse().find(e => e[0] <= y);
   showCard(`
@@ -751,22 +775,41 @@ svg.on('click', e => {
   const last = q.i === 4;
   showCard(`
     <div class="kicker">${q.practice ? 'Practice round' : 'Daily quiz #' + q.n} · ${q.i + 1} / 5</div>
-    <h2>${emojiFor(km)} ${km < 25 ? 'Bullseye!' : km.toLocaleString() + ' km away'}</h2>
+    <h2>${emojiFor(km)} ${km < 25 ? 'Bullseye!' : '<span id="kmcount">0</span> km away'}</h2>
     <p class="sub">${esc(cityName(c, y))}, ${esc(fmtY(y))} · <b>+${scoreFor(km)}</b> points</p>
     <p class="fact">${esc(c.fact)}</p>
     <div class="qbar">${q.items.map((_, k) => `<i>${q.results[k] !== undefined ? emojiFor(q.results[k]) : ''}</i>`).join('')}</div>
     <div class="row"><button class="btn" id="qnext">${last ? 'See my score' : 'Next place →'}</button></div>`, 'quizcard');
+  countUp($('#kmcount'), km, 900);
   $('#qnext').onclick = () => { if (last) { if (!q.practice) store.set('kc-daily-' + q.n, q.results); quizSummary(); } else { q.i++; askQ(); } };
 });
 function renderQuizMarks() {
   const q = state.quiz;
   if (state.mode !== 'quiz' || !q || !q.answered || !q.guess) { gQuiz.selectAll('*').remove(); return; }
   const c = cityById[q.items[q.i][0]], g = T.apply(projection(q.guess)), t = T.apply(c.xy);
-  gQuiz.selectAll('line').data([0]).join('line').attr('x1', g[0]).attr('y1', g[1]).attr('x2', t[0]).attr('y2', t[1]);
+  const fresh = gQuiz.select('line').empty();
+  const ln = gQuiz.selectAll('line').data([0]).join('line').attr('x1', g[0]).attr('y1', g[1]).attr('x2', t[0]).attr('y2', t[1]).attr('pathLength', 1);
+  if (fresh) ln.classed('draw', true);
   gQuiz.selectAll('circle.guess').data([0]).join('circle').attr('class', 'guess').attr('cx', g[0]).attr('cy', g[1]).attr('r', 6);
   gQuiz.selectAll('circle.truth').data([0]).join('circle').attr('class', 'truth').attr('cx', t[0]).attr('cy', t[1]).attr('r', 7);
   gQuiz.selectAll('text').data([0]).join('text').attr('x', t[0] + 11).attr('y', t[1]).attr('dy', '.35em').text(cityName(c, q.items[q.i][1]));
 }
+function countUp(el, to, ms) {
+  if (!el) return;
+  if (reduceMotion) { el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => { const x = Math.min(1, (now - t0) / ms), e = 1 - (1 - x) ** 3; el.textContent = Math.round(to * e).toLocaleString(); if (x < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+// days in a row with a finished daily quiz, ending today (or yesterday)
+function quizStreak(today) {
+  const days = [];
+  for (let k = 6; k >= 0; k--) days.push({ n: today - k, done: !!store.get('kc-daily-' + (today - k)) });
+  let streak = 0;
+  for (let n = today; n > 0 && store.get('kc-daily-' + n); n--) streak++;
+  return { days, streak };
+}
+const CHAKRA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4M7.5 4.2l9 15.6M16.5 4.2l-9 15.6M4.2 7.5l15.6 9M4.2 16.5l15.6-9" stroke="currentColor" stroke-width=".7"/></svg>';
 function quizSummary() {
   const q = state.quiz, total = q.results.reduce((s, km) => s + scoreFor(km), 0), title = titleFor(total);
   q.i = 5; q.answered = false; gQuiz.selectAll('*').remove();
@@ -777,6 +820,7 @@ function quizSummary() {
     <h2 class="rank">${esc(title)}</h2>
     <div class="score">${total.toLocaleString()}<small> / 5,000</small></div>
     <div class="qbar big">${emo.match(/./gu).map(e => `<i>${e}</i>`).join('')}</div>
+    ${q.practice ? '' : (() => { const s = quizStreak(q.n); return `<div class="streak"><div class="streak-h"><b>${s.streak}-day streak</b><span>${s.streak > 1 ? 'Keep the wheel turning' : 'Come back tomorrow to start a streak'}</span></div><div class="streak-row">${s.days.map((d, k) => `<span class="${d.done ? 'on' : ''}${k === 6 ? ' today' : ''}" style="--d:${k * 60}ms">${CHAKRA_SVG}</span>`).join('')}</div></div>`; })()}
     <p class="note">${q.items.map((it, k) => `${esc(cityName(cityById[it[0]], it[1]))}: ${q.results[k].toLocaleString()} km`).join(' · ')}</p>
     <div class="row">
       <button class="btn" id="qshare">Share result</button>

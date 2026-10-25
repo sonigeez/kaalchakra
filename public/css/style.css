@@ -348,3 +348,45 @@ body.intro-on .band-side, body.intro-on .yearbox, body.intro-on .legend, body.in
 .mev .my { font: 600 14px var(--text); color: var(--accent); font-variant-numeric: tabular-nums; }
 .mev .mt { font-size: 14.5px; line-height: 1.45; }
 .mev svg { width: 13px; height: 13px; vertical-align: -1px; margin-left: 3px; color: var(--ink-3); }
+
+/* ---------- micro-interactions */
+.hbubble { position: absolute; bottom: 52px; transform: translateX(-50%) translateY(6px); display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 7px 11px 8px; background: var(--ink); color: var(--paper-hi); border-radius: 6px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .15s var(--ease), transform .15s var(--ease); z-index: 2; }
+.hbubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
+.track.drag .hbubble { opacity: 1; transform: translateX(-50%); }
+.hbubble b { font: 600 17px/1 var(--display); font-variant-numeric: tabular-nums; }
+.hbubble span { display: flex; align-items: center; gap: 6px; font-size: 12px; opacity: .85; }
+.hbubble i { width: 8px; height: 8px; border-radius: 2px; }
+.hbubble.flash::before { content: attr(data-era); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  font: 600 15px var(--deva); color: var(--accent); white-space: nowrap; animation: eraflash .9s var(--ease) both; }
+@keyframes eraflash { 0% { opacity: 0; transform: translate(-50%, 6px); } 25% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -6px); } }
+.track.drag .handle { width: 3px; margin-left: -1.5px; }
+.minor i { transition: height .15s var(--ease); }
+.track.drag .minor i.mj { height: 10px; }
+
+.pol.pulse-once .wash { animation: polpulse .9s var(--ease); }
+@keyframes polpulse { 0% { fill-opacity: .26; } 30% { fill-opacity: .55; } 100% { fill-opacity: .26; } }
+.pol.pulse-once .band { animation: bandpulse .9s var(--ease); }
+@keyframes bandpulse { 30% { stroke-opacity: .7; } }
+
+@media (max-width: 759px) { .card { animation: sheet .32s var(--ease); } }
+@keyframes sheet { from { transform: translateY(40px); opacity: 0; } }
+
+.quizmarks line.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawline .7s var(--ease) forwards; }
+@keyframes drawline { to { stroke-dashoffset: 0; } }
+.quizmarks .truth { animation: truthpop .35s .6s var(--ease) both; transform-box: fill-box; transform-origin: center; }
+@keyframes truthpop { from { transform: scale(0); } }
+
+.streak { margin: 16px 0 6px; padding: 14px 0 0; border-top: 1px solid var(--rule); }
+.streak-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.streak-h b { font: 600 18px var(--display); }
+.streak-h span { font-size: 13px; color: var(--ink-3); }
+.streak-row { display: flex; gap: 10px; }
+.streak-row span { width: 30px; height: 30px; color: var(--rule-strong); }
+.streak-row span svg { width: 100%; height: 100%; }
+.streak-row span.on { color: var(--accent); animation: chakrafill .5s var(--d) var(--ease) both; }
+.streak-row span.today.on svg { animation: spin 1.2s calc(var(--d) + .2s) var(--ease) both; }
+@keyframes chakrafill { from { transform: scale(.6); opacity: 0; } }
+@keyframes spin { from { transform: rotate(-180deg); } }
+.btn:active, .primary:active, .play:active { transform: scale(.97); }
