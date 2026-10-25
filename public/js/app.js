@@ -448,6 +448,21 @@ const devaNum = n => String(n).replace(/\d/g, d => '०१२३४५६७८�
 const ui = { samvat: $('#samvat'), chakra: $('#chakra'), year: $('#year'), era: $('#era'), head: $('#headline'), ticker: $('#ticker'), legend: $('#legend'), handle: $('#handle'), track: $('#track') };
 let lastLegendKey = '', hashTimer = null, lastYear = state.year;
 
+// the big year rolls digit by digit, like a mechanical counter
+function setOdometer(el, str) {
+  const chars = [...str];
+  if (el._shape !== chars.map(c => /\d/.test(c) ? '9' : c).join('')) {
+    el._shape = chars.map(c => /\d/.test(c) ? '9' : c).join('');
+    el.innerHTML = chars.map(c => /\d/.test(c)
+      ? `<span class="od"><span class="od-col">${'0123456789'.split('').map(d => `<span>${d}</span>`).join('')}</span></span>`
+      : `<span class="od-s">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+    el.setAttribute('aria-label', str);
+  }
+  const cols = el.querySelectorAll('.od-col');
+  let k = 0;
+  chars.forEach(c => { if (/\d/.test(c)) cols[k++].style.transform = `translateY(${-+c}em)`; });
+  el.setAttribute('aria-label', str);
+}
 function setYear(y, opts = {}) {
   y = Math.max(MIN, Math.min(MAX, Math.round(y)));
   if (y === 0) y = lastYear < 0 ? 1 : -1;
@@ -456,7 +471,7 @@ function setYear(y, opts = {}) {
   const act = activeAt(y);
   updateTerritories(opts.instant ? 'instant' : 'animate');
   renderOverlay();
-  ui.year.textContent = fmtY(y).replace(' ', ' ');
+  setOdometer(ui.year, fmtY(y));
   ui.year.classList.toggle('bce', y < 0);
   const era = KC.eras.find(e => inR(y, e[0], e[1]));
   ui.era.innerHTML = era ? `${esc(era[2])}<span class="deva-era">${ERA_HI[era[2]] || ''}</span>` : '';
@@ -545,10 +560,10 @@ function buildTimeline() {
   track.addEventListener('pointerdown', e => {
     if (state.mode === 'quiz') return;
     e.preventDefault();
-    stopPlay(); track.setPointerCapture(e.pointerId); track.classList.add('drag'); dragging = true;
+    stopPlay(); track.setPointerCapture(e.pointerId); track.classList.add('drag'); document.body.classList.add('playing'); dragging = true;
     dragFrac = frac(e); applyDrag();
     const mv = ev => { dragFrac = frac(ev); if (!dragRaf) dragRaf = requestAnimationFrame(applyDrag); };
-    const up = () => { dragging = false; dragFrac = null; lastCentury = null; track.classList.remove('drag'); track.removeEventListener('pointermove', mv); track.removeEventListener('pointerup', up); track.removeEventListener('pointercancel', up); };
+    const up = () => { dragging = false; dragFrac = null; lastCentury = null; track.classList.remove('drag'); document.body.classList.remove('playing'); track.removeEventListener('pointermove', mv); track.removeEventListener('pointerup', up); track.removeEventListener('pointercancel', up); };
     track.addEventListener('pointermove', mv); track.addEventListener('pointerup', up); track.addEventListener('pointercancel', up);
   });
 }
@@ -559,7 +574,7 @@ let raf = null, lastT = 0;
 function startPlay() {
   if (state.mode === 'quiz') return;
   if (state.year >= MAX - 1) setYear(MIN);
-  state.playing = true; $('#play').classList.add('on'); $('#play').setAttribute('aria-label', 'Pause');
+  state.playing = true; document.body.classList.add('playing'); $('#play').classList.add('on'); $('#play').setAttribute('aria-label', 'Pause');
   lastT = performance.now();
   let pos = y2p(state.year);
   const tick = t => {
@@ -572,7 +587,7 @@ function startPlay() {
   raf = requestAnimationFrame(tick);
 }
 function stopPlay() {
-  state.playing = false; cancelAnimationFrame(raf);
+  state.playing = false; document.body.classList.remove('playing'); cancelAnimationFrame(raf);
   $('#play').classList.remove('on'); $('#play').setAttribute('aria-label', 'Play');
 }
 $('#play').onclick = () => state.playing ? stopPlay() : startPlay();
@@ -684,7 +699,16 @@ function startJourney(id, step = 0) {
 }
 function goStep(i) {
   const j = state.journey; if (!j) return;
-  i = Math.max(0, Math.min(j.stops.length - 1, i)); state.step = i;
+  i = Math.max(0, Math.min(j.stops.length - 1, i));
+  const forward = i === state.step + 1;
+  state.step = i;
+  // ink trail: the new leg draws itself as the map travels
+  cancelAnimationFrame(state.trailRaf); state.trailProg = forward && !reduceMotion ? 0 : 1;
+  if (forward && !reduceMotion) {
+    const t0 = performance.now();
+    const run = now => { const x = Math.min(1, (now - t0) / 900); state.trailProg = 1 - (1 - x) ** 3; renderRoute(); if (x < 1) state.trailRaf = requestAnimationFrame(run); };
+    state.trailRaf = requestAnimationFrame(run);
+  }
   const [y, ll, place, text] = j.stops[i];
   setYear(y, { keepCard: true });
   flyTo(ll, isMobile() ? 2.4 : 2.3);
@@ -717,7 +741,12 @@ function renderRoute() {
   if (!j) { gRoute.selectAll('*').remove(); return; }
   const pts = j.stops.map(s => T.apply(projection(s[1])));
   const line = d3.line().curve(d3.curveCatmullRom.alpha(.5));
-  const done = pts.slice(0, state.step + 1);
+  let done = pts.slice(0, state.step + 1);
+  const prog = state.trailProg ?? 1;
+  if (prog < 1 && done.length > 1) {
+    const a = done[done.length - 2], b = done[done.length - 1];
+    done = done.slice(0, -1).concat([[a[0] + (b[0] - a[0]) * prog, a[1] + (b[1] - a[1]) * prog]]);
+  }
   gRoute.selectAll('path.all').data([pts]).join('path').attr('class', 'all').attr('d', line);
   gRoute.selectAll('path.done').data([done]).join('path').attr('class', 'done').attr('stroke', j.color).attr('d', d => d.length > 1 ? line(d) : null);
   gRoute.selectAll('g.stop').data(pts).join(en => { const g = en.append('g').attr('class', 'stop'); g.append('circle'); g.append('text').attr('dy', '.35em'); return g; })
@@ -1043,7 +1072,7 @@ async function shareHomeImage() {
       <button class="btn ghost" id="cardlink">Copy link</button>
     </div>`);
   if ($('#cardshare')) $('#cardshare').onclick = async () => { try { await navigator.share({ files: [file], text, url: link }); } catch {} };
-  $('#cardlink').onclick = async () => { try { await navigator.clipboard.writeText(text + '\n' + link); toast('Link copied'); } catch { toast('Could not copy'); } };
+  $('#cardlink').onclick = async () => { try { await navigator.clipboard.writeText(text + '\n' + link); copiedCheck($('#cardlink')); } catch { toast('Could not copy'); } };
 }
 
 
@@ -1126,11 +1155,23 @@ function readHash() {
   if (h.get('p') && cityById[h.get('p')]) openPlace(h.get('p'));
   if (h.get('home') && townById[h.get('home')]) openHome(townById[h.get('home')]);
 }
+// a copy button briefly becomes a drawn check mark
+function copiedCheck(btn) {
+  if (!btn || btn._copied) return;
+  btn._copied = true;
+  const html = btn.innerHTML, w = btn.offsetWidth;
+  btn.style.minWidth = w + 'px';
+  btn.classList.add('copied');
+  btn.innerHTML = '<svg class="ck" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" pathLength="1"/></svg>' + (w > 60 ? '<span>Copied</span>' : '');
+  setTimeout(() => { btn.innerHTML = html; btn.classList.remove('copied'); btn.style.minWidth = ''; btn._copied = false; }, 1600);
+}
 async function share(text, url) {
   url = url || shareUrl();
   try {
     if (navigator.share && isMobile()) { await navigator.share({ text, url }); return; }
-    await navigator.clipboard.writeText(text + '\n' + url); toast('Copied to clipboard');
+    await navigator.clipboard.writeText(text + '\n' + url);
+    const b = document.activeElement;
+    if (b && b.tagName === 'BUTTON') copiedCheck(b); else toast('Copied to clipboard');
   } catch { toast('Could not share. Copy the address bar instead.'); }
 }
 function shareMoment() {

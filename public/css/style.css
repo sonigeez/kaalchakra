@@ -402,3 +402,17 @@ body.intro-on .band-side, body.intro-on .yearbox, body.intro-on .legend, body.in
 .card.journey h2 { animation: stepin .3s var(--ease); }
 @keyframes stepin { from { opacity: 0; transform: translateY(4px); } }
 @media (max-width: 759px) { .card.journey { min-height: 0; } }
+
+/* odometer */
+.year { display: flex; align-items: baseline; }
+.od { display: inline-block; height: 1em; overflow: hidden; line-height: 1; vertical-align: top; }
+.od-col { display: flex; flex-direction: column; transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
+.od-col span { height: 1em; line-height: 1; text-align: center; }
+.od-s { display: inline-block; line-height: 1; }
+.playing .od-col { transition-duration: .18s; }
+@media (prefers-reduced-motion: reduce) { .od-col { transition: none; } }
+/* copied check */
+.copied { justify-content: center; gap: 6px; }
+.ck { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ck path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawline .35s var(--ease) forwards; }
+.btn.copied { display: inline-flex; align-items: center; }
