@@ -77,7 +77,7 @@ const chiefHatch = defs.append('pattern').attr('id', 'chiefHatch').attr('width',
   .attr('patternTransform', 'rotate(45)');
 chiefHatch.append('path').attr('d', 'M0 0V6').attr('stroke', '#4d463d').attr('stroke-width', .8).attr('opacity', .32);
 const hatch = defs.append('pattern').attr('id', 'hatch').attr('width', 6).attr('height', 4).attr('patternUnits', 'userSpaceOnUse');
-hatch.append('path').attr('d', 'M0 .5H6').attr('stroke', '#5f7c8c').attr('stroke-width', .5).attr('opacity', .35);
+hatch.append('path').attr('d', 'M0 .5H6').attr('stroke', '#7d97a4').attr('stroke-width', .5).attr('opacity', .35);
 svg.append('rect').attr('class', 'sea-hatch').attr('fill', 'url(#hatch)').attr('pointer-events', 'none');
 const gMap = svg.append('g');
 const gGrat = gMap.append('path').attr('class', 'graticule');
@@ -441,7 +441,10 @@ function renderOverlay() {
 }
 
 // ---------- year & UI
-const ui = { year: $('#year'), era: $('#era'), head: $('#headline'), ticker: $('#ticker'), legend: $('#legend'), handle: $('#handle'), track: $('#track') };
+const ERA_HI = { 'Harappan': 'हड़प्पा युग', 'Vedic': 'वैदिक युग', 'Mahajanapadas': 'महाजनपद काल', 'Maurya': 'मौर्य युग', 'Classical': 'शास्त्रीय युग',
+  'Early medieval': 'पूर्व मध्यकाल', 'Sultanates': 'सल्तनत काल', 'Mughal': 'मुग़ल काल', 'Marathas & Company': 'मराठा एवं कंपनी काल' };
+const devaNum = n => String(n).replace(/\d/g, d => '०१२३४५६७८९'[d]);
+const ui = { samvat: $('#samvat'), chakra: $('#chakra'), year: $('#year'), era: $('#era'), head: $('#headline'), ticker: $('#ticker'), legend: $('#legend'), handle: $('#handle'), track: $('#track') };
 let lastLegendKey = '', hashTimer = null, lastYear = state.year;
 
 function setYear(y, opts = {}) {
@@ -455,7 +458,10 @@ function setYear(y, opts = {}) {
   ui.year.textContent = fmtY(y).replace(' ', ' ');
   ui.year.classList.toggle('bce', y < 0);
   const era = KC.eras.find(e => inR(y, e[0], e[1]));
-  ui.era.textContent = era ? era[2] : '';
+  ui.era.innerHTML = era ? `${esc(era[2])}<span class="deva-era">${ERA_HI[era[2]] || ''}</span>` : '';
+  const vs = y >= -57 ? y + 57 + (y < 0 ? 1 : 0) : null;
+  ui.samvat.textContent = vs ? `विक्रम संवत् ${devaNum(vs)}` : '';
+  ui.chakra.style.transform = `rotate(${(y - MIN) * .15}deg)`;
   if (act.length) {
     const top = act[0], r = rulerOf(top.p, y);
     ui.head.innerHTML = r ? `<b>${esc(r)}</b> · ${esc(top.p.name)}` : `<b>${esc(top.p.name)}</b>`;
@@ -566,7 +572,7 @@ addEventListener('keydown', e => {
 // ---------- cards
 const card = $('#card');
 function showCard(html, cls) {
-  card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false;
+  card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false; card.scrollTop = 0;
   card.querySelector('.x').onclick = closeCard;
   document.body.classList.add('has-card');
 }
@@ -603,17 +609,34 @@ function renderPlaceCard() {
   $('#share-place').onclick = () => share(`${now || c.names[0][2]} has had ${c.names.length} name${c.names.length > 1 ? 's' : ''} in Indian history. Trace it on Kaalchakra:`);
 }
 
+// events that happened on a power's ground while it held it
+function eventsOf(p) {
+  const pi = pIndex.get(p.id);
+  return KC.events.filter(e => {
+    if (e[0] < p.span[0] || e[0] >= p.span[1]) return false;
+    const [x, y] = projection(evLL(e));
+    return geo.ownerAt(x, y, e[0]) === pi;
+  });
+}
+const MAP_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5l4-1.5 5 1.5 4-1.5v10.5l-4 1.5-5-1.5-4 1.5zM5.5 2v10.5M10.5 3.5V14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 function openPolity(id) {
   const p = KC.polities.find(p => p.id === id), y = state.year;
   const peak = p.phases.reduce((a, b) => areaOf(b.regions) > areaOf(a.regions) ? b : a);
+  const evs = eventsOf(p), cur = [...evs].reverse().find(e => e[0] <= y);
   showCard(`
-    <div class="kicker">${esc(fmtY(p.span[0]))} – ${p.span[1] >= MAX ? '1857 CE' : esc(fmtY(p.span[1]))}${p.conf === 'low' ? ' · uncertain' : ''}</div>
-    <h2>${esc(p.name)}</h2>
-    ${p.capital ? `<p class="sub">Capital: ${esc(p.capital)}</p>` : ''}
+    <div class="phead"><h2>${esc(p.name)}</h2><span class="pspan">${esc(fmtY(p.span[0]))} – ${p.span[1] >= MAX ? '1857 CE' : esc(fmtY(p.span[1]))}</span></div>
+    ${p.capital ? `<p class="pcap"><span class="chip">capital</span>${esc(p.capital)}</p>` : ''}
+    ${p.conf === 'low' ? '<p class="note">Extent and dates are uncertain.</p>' : ''}
     <p class="fact">${esc(p.note || '')}</p>
-    ${(p.rulers || []).length ? `<div class="evs">${p.rulers.map(r => `<button data-y="${r[0]}" class="${inR(y, r[0], r[1]) ? 'on' : ''}"><span>${esc(fmtY(r[0]))}</span>${esc(r[2])}</button>`).join('')}</div>` : ''}
+    ${evs.length ? `<h3 class="sect">Major events</h3><div class="mev">${evs.map((e, k) => `<button data-e="${k}" class="${e === cur ? 'on' : ''}"><span class="my">${esc(fmtY(e[0]))}</span><span class="mt">${esc(e[1])} ${MAP_ICON}</span></button>`).join('')}</div>` : ''}
+    ${(p.rulers || []).length ? `<h3 class="sect">Rulers</h3><div class="evs">${p.rulers.map(r => `<button data-y="${r[0]}" class="${inR(y, r[0], r[1]) ? 'on' : ''}"><span>${esc(fmtY(r[0]))}</span>${esc(r[2])}</button>`).join('')}</div>` : ''}
     <div class="row"><button class="btn" id="peak">Jump to its peak</button></div>`, 'polity');
   card.querySelectorAll('[data-y]').forEach(b => b.onclick = () => setYear(+b.dataset.y));
+  card.querySelectorAll('[data-e]').forEach(b => b.onclick = () => {
+    const e = evs[+b.dataset.e];
+    setYear(e[0]); flyTo(evLL(e), Math.max(T.k, 2.6)); setTimeout(() => pulse(evLL(e), '#c8361f'), 900);
+    card.querySelectorAll('.mev button').forEach(x => x.classList.toggle('on', x === b));
+  });
   $('#peak').onclick = () => { setYear(Math.round((peak.from + peak.to) / 2)); flyHome(); };
   state.place = null;
 }
@@ -899,7 +922,7 @@ async function drawHomeImage(h) {
   const c = cv.getContext('2d'), H = h.hist;
   await Promise.all(['600 120px Eczar', '30px "IM Fell English SC"', '500 24px "IBM Plex Mono"', '30px "Source Serif 4"', '600 30px "Source Serif 4"']
     .map(f => document.fonts.load(f).catch(() => {})));
-  const INK = '#1f1b16', INK2 = '#4d463d', INK3 = '#6f665a', PAPER = '#f2ece0', ACC = '#c8361f', RULE = 'rgba(31,27,22,.55)';
+  const INK = '#1c1a17', INK2 = '#4a4540', INK3 = '#6b655d', PAPER = '#fbfaf6', ACC = '#c8361f', RULE = 'rgba(28,26,23,.35)';
   c.fillStyle = PAPER; c.fillRect(0, 0, W, Hh);
   c.strokeStyle = INK; c.lineWidth = 2; c.strokeRect(36, 36, W - 72, Hh - 72);
   c.lineWidth = 1; c.strokeRect(44, 44, W - 88, Hh - 88);
@@ -920,7 +943,7 @@ async function drawHomeImage(h) {
   // mini map
   const mx0 = 600, my0 = 410, mx1 = W - 84, my1 = 770;
   c.save(); c.beginPath(); c.rect(mx0, my0, mx1 - mx0, my1 - my0); c.clip();
-  c.fillStyle = '#dde3df'; c.fillRect(mx0, my0, mx1 - mx0, my1 - my0);
+  c.fillStyle = '#e3eaed'; c.fillRect(mx0, my0, mx1 - mx0, my1 - my0);
   c.strokeStyle = 'rgba(95,124,140,.3)'; c.lineWidth = 1;
   for (let yy = my0; yy < my1; yy += 7) { c.beginPath(); c.moveTo(mx0, yy + .5); c.lineTo(mx1, yy + .5); c.stroke(); }
   const pj = d3.geoMercator().fitExtent([[mx0 + 14, my0 + 14], [mx1 - 14, my1 - 14]], { type: 'MultiPoint', coordinates: [[66, 6.5], [93, 35.5]] });
@@ -935,7 +958,7 @@ async function drawHomeImage(h) {
   // time strip
   const sx0 = 84, sx1 = W - 84, sy = 830, sh = 56, X = y => sx0 + y2p(y) * (sx1 - sx0);
   c.fillStyle = INK3; c.font = '500 22px "IBM Plex Mono"'; c.fillText('WHO HELD IT, YEAR BY YEAR', sx0, sy - 16);
-  c.fillStyle = '#e6dfd0'; c.fillRect(sx0, sy, sx1 - sx0, sh);
+  c.fillStyle = '#eeebe3'; c.fillRect(sx0, sy, sx1 - sx0, sh);
   H.ruled.forEach(r => { c.fillStyle = PL[r.pi].color; c.fillRect(X(r.from), sy, Math.max(2, X(Math.min(r.to, MAX)) - X(r.from)), sh); });
   c.strokeStyle = INK; c.lineWidth = 1.5; c.strokeRect(sx0, sy, sx1 - sx0, sh);
   c.fillStyle = INK3; c.font = '20px "IBM Plex Mono"';

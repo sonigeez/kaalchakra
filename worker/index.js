@@ -15,7 +15,7 @@ const FONTS = [
   { name: 'Mono', data: mono, weight: 500, style: 'normal' },
   { name: 'Fell', data: fell, weight: 400, style: 'normal' }
 ];
-const C = { paper: '#f2ece0', ink: '#1f1b16', ink2: '#4d463d', ink3: '#6f665a', acc: '#c8361f', sea: '#dde3df', track: '#e6dfd0' };
+const C = { paper: '#fbfaf6', ink: '#1c1a17', ink2: '#4a4540', ink3: '#6b655d', acc: '#c8361f', sea: '#e3eaed', track: '#eeebe3' };
 const MIN = -2600, MAX = 1857, SEG = [[-2600, 0], [-600, 0.14], [MAX, 1]];
 const SITE = 'kaalchakra.anokha.space';
 
@@ -71,7 +71,7 @@ function miniMap({ year = null, faint = false, pins = [], route = null, routeCol
   s += `<defs><clipPath id="l"><path d="${D.landPath}"/></clipPath><filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter></defs>`;
   s += `<rect width="${W}" height="${H}" fill="${C.sea}"/>`;
   let hatch = ''; for (let y = 2; y < H; y += 5) hatch += `M0 ${y}H${W}`;
-  s += `<path d="${hatch}" stroke="#5f7c8c" stroke-opacity=".28" stroke-width=".6"/>`;
+  s += `<path d="${hatch}" stroke="#7d97a4" stroke-opacity=".28" stroke-width=".6"/>`;
   s += `<path d="${D.landPath}" fill="${C.paper}"/>`;
   if (year !== null) {
     s += `<g clip-path="url(#l)">`;
