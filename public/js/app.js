@@ -394,7 +394,8 @@ function polLabelData() {
     const areaPx = L.n * G.cell * G.cell * T.k * T.k;
     if (areaPx < 14000 || L.depth < .75) return;
     const [x, y] = T.apply([L.x, L.y]), size = 12.5;
-    const label = state.year < -600 ? 'Village cultures' : 'Local chiefdoms';
+    const label = state.year >= -1200 && state.year < -300 && projection.invert([L.x, L.y])[1] < 16 ? 'Megalithic chiefdoms'   // the far south before the Tamil kingdoms
+      : state.year < -600 ? 'Village cultures' : 'Local chiefdoms';
     const w = label.length * size * .5, h = size * 1.3, box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2];
     if (placed.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) return;
     placed.push(box);
