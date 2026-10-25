@@ -325,3 +325,25 @@ body.journey .legend, body.quiz .legend { opacity: 0; pointer-events: none; }
 body.intro-on .band-side, body.intro-on .yearbox, body.intro-on .legend, body.intro-on .actions, body.intro-on .timeline, body.intro-on .pol-labels, body.intro-on .cities { opacity: 0; pointer-events: none; }
 .band-side, .yearbox, .actions, .timeline, .pol-labels, .cities { transition: opacity .5s var(--ease); }
 @media (max-width: 759px) { .i-body { padding-bottom: 6vh; } .i-body p { font-size: 15px; } }
+
+/* ---------- Indian touches */
+.logo { display: flex; align-items: center; }
+.chakra { width: 22px; height: 22px; margin-right: 9px; stroke: var(--accent); fill: var(--accent); transition: transform .3s linear; flex: none; }
+.deva-era { font: 600 13px var(--deva); letter-spacing: 0; text-transform: none; color: var(--ink-3); margin-left: 8px; }
+.samvat { font: 500 15px var(--deva); color: var(--ink-3); margin: -4px 0 10px; min-height: 1em; }
+
+/* ---------- kingdom card: major events */
+.phead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 36px 10px 0; border-bottom: 2px solid var(--ink-2); }
+.phead h2 { margin: 0; }
+.pspan { font: 500 13px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.pcap { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; font-size: 15px; }
+.chip { font: 600 12px var(--text); color: var(--accent); background: rgba(200, 54, 31, .1); padding: 3px 9px; border-radius: var(--r); }
+.sect { font: 600 13px var(--text); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin: 22px 0 10px; }
+.mev { display: flex; flex-direction: column; gap: 8px; }
+.mev button { display: grid; grid-template-columns: 84px 1fr; gap: 12px; text-align: left; padding: 11px 14px; background: var(--paper-hi);
+  border: 1px solid var(--rule); border-radius: 6px; transition: border-color .15s; }
+.mev button:hover { border-color: var(--rule-strong); }
+.mev button.on { border-color: var(--accent); }
+.mev .my { font: 600 14px var(--text); color: var(--accent); font-variant-numeric: tabular-nums; }
+.mev .mt { font-size: 14.5px; line-height: 1.45; }
+.mev svg { width: 13px; height: 13px; vertical-align: -1px; margin-left: 3px; color: var(--ink-3); }

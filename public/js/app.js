@@ -440,7 +440,10 @@ function renderOverlay() {
 }
 
 // ---------- year & UI
-const ui = { year: $('#year'), era: $('#era'), head: $('#headline'), ticker: $('#ticker'), legend: $('#legend'), handle: $('#handle'), track: $('#track') };
+const ERA_HI = { 'Harappan': 'हड़प्पा युग', 'Vedic': 'वैदिक युग', 'Mahajanapadas': 'महाजनपद काल', 'Maurya': 'मौर्य युग', 'Classical': 'शास्त्रीय युग',
+  'Early medieval': 'पूर्व मध्यकाल', 'Sultanates': 'सल्तनत काल', 'Mughal': 'मुग़ल काल', 'Marathas & Company': 'मराठा एवं कंपनी काल' };
+const devaNum = n => String(n).replace(/\d/g, d => '०१२३४५६७८९'[d]);
+const ui = { samvat: $('#samvat'), chakra: $('#chakra'), year: $('#year'), era: $('#era'), head: $('#headline'), ticker: $('#ticker'), legend: $('#legend'), handle: $('#handle'), track: $('#track') };
 let lastLegendKey = '', hashTimer = null, lastYear = state.year;
 
 function setYear(y, opts = {}) {
@@ -454,7 +457,10 @@ function setYear(y, opts = {}) {
   ui.year.textContent = fmtY(y).replace(' ', ' ');
   ui.year.classList.toggle('bce', y < 0);
   const era = KC.eras.find(e => inR(y, e[0], e[1]));
-  ui.era.textContent = era ? era[2] : '';
+  ui.era.innerHTML = era ? `${esc(era[2])}<span class="deva-era">${ERA_HI[era[2]] || ''}</span>` : '';
+  const vs = y >= -57 ? y + 57 + (y < 0 ? 1 : 0) : null;
+  ui.samvat.textContent = vs ? `विक्रम संवत् ${devaNum(vs)}` : '';
+  ui.chakra.style.transform = `rotate(${(y - MIN) * .15}deg)`;
   if (act.length) {
     const top = act[0], r = rulerOf(top.p, y);
     ui.head.innerHTML = r ? `<b>${esc(r)}</b> · ${esc(top.p.name)}` : `<b>${esc(top.p.name)}</b>`;
@@ -565,7 +571,7 @@ addEventListener('keydown', e => {
 // ---------- cards
 const card = $('#card');
 function showCard(html, cls) {
-  card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false;
+  card.className = 'card ' + (cls || ''); card.innerHTML = `<button class="x" aria-label="Close">×</button>` + html; card.hidden = false; card.scrollTop = 0;
   card.querySelector('.x').onclick = closeCard;
   document.body.classList.add('has-card');
 }
@@ -602,17 +608,34 @@ function renderPlaceCard() {
   $('#share-place').onclick = () => share(`${now || c.names[0][2]} has had ${c.names.length} name${c.names.length > 1 ? 's' : ''} in Indian history. Trace it on Kaalchakra:`);
 }
 
+// events that happened on a power's ground while it held it
+function eventsOf(p) {
+  const pi = pIndex.get(p.id);
+  return KC.events.filter(e => {
+    if (e[0] < p.span[0] || e[0] >= p.span[1]) return false;
+    const [x, y] = projection(evLL(e));
+    return geo.ownerAt(x, y, e[0]) === pi;
+  });
+}
+const MAP_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5l4-1.5 5 1.5 4-1.5v10.5l-4 1.5-5-1.5-4 1.5zM5.5 2v10.5M10.5 3.5V14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 function openPolity(id) {
   const p = KC.polities.find(p => p.id === id), y = state.year;
   const peak = p.phases.reduce((a, b) => areaOf(b.regions) > areaOf(a.regions) ? b : a);
+  const evs = eventsOf(p), cur = [...evs].reverse().find(e => e[0] <= y);
   showCard(`
-    <div class="kicker">${esc(fmtY(p.span[0]))} – ${p.span[1] >= MAX ? '1857 CE' : esc(fmtY(p.span[1]))}${p.conf === 'low' ? ' · uncertain' : ''}</div>
-    <h2>${esc(p.name)}</h2>
-    ${p.capital ? `<p class="sub">Capital: ${esc(p.capital)}</p>` : ''}
+    <div class="phead"><h2>${esc(p.name)}</h2><span class="pspan">${esc(fmtY(p.span[0]))} – ${p.span[1] >= MAX ? '1857 CE' : esc(fmtY(p.span[1]))}</span></div>
+    ${p.capital ? `<p class="pcap"><span class="chip">capital</span>${esc(p.capital)}</p>` : ''}
+    ${p.conf === 'low' ? '<p class="note">Extent and dates are uncertain.</p>' : ''}
     <p class="fact">${esc(p.note || '')}</p>
-    ${(p.rulers || []).length ? `<div class="evs">${p.rulers.map(r => `<button data-y="${r[0]}" class="${inR(y, r[0], r[1]) ? 'on' : ''}"><span>${esc(fmtY(r[0]))}</span>${esc(r[2])}</button>`).join('')}</div>` : ''}
+    ${evs.length ? `<h3 class="sect">Major events</h3><div class="mev">${evs.map((e, k) => `<button data-e="${k}" class="${e === cur ? 'on' : ''}"><span class="my">${esc(fmtY(e[0]))}</span><span class="mt">${esc(e[1])} ${MAP_ICON}</span></button>`).join('')}</div>` : ''}
+    ${(p.rulers || []).length ? `<h3 class="sect">Rulers</h3><div class="evs">${p.rulers.map(r => `<button data-y="${r[0]}" class="${inR(y, r[0], r[1]) ? 'on' : ''}"><span>${esc(fmtY(r[0]))}</span>${esc(r[2])}</button>`).join('')}</div>` : ''}
     <div class="row"><button class="btn" id="peak">Jump to its peak</button></div>`, 'polity');
   card.querySelectorAll('[data-y]').forEach(b => b.onclick = () => setYear(+b.dataset.y));
+  card.querySelectorAll('[data-e]').forEach(b => b.onclick = () => {
+    const e = evs[+b.dataset.e];
+    setYear(e[0]); flyTo(evLL(e), Math.max(T.k, 2.6)); setTimeout(() => pulse(evLL(e), '#c8361f'), 900);
+    card.querySelectorAll('.mev button').forEach(x => x.classList.toggle('on', x === b));
+  });
   $('#peak').onclick = () => { setYear(Math.round((peak.from + peak.to) / 2)); flyHome(); };
   state.place = null;
 }
