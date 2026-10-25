@@ -1,0 +1,16 @@
+name = "kaalchakra"
+main = "worker/index.js"
+compatibility_date = "2025-10-01"
+account_id = "41c98402ec5a272c8d9cce3ccac9c7ef"
+workers_dev = true
+routes = [{ pattern = "kaalchakra.anokha.space", custom_domain = true }]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.woff"]
+fallthrough = true

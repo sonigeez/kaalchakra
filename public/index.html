@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#f2ece0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kaalchakra · 4,000 years of India</title>
+<meta name="description" content="Watch empires rise and fall, follow Xuanzang and Ibn Battuta, and find out who ruled your city.">
+<link rel="canonical" href="https://kaalchakra.anokha.space/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kaalchakra">
+<meta property="og:title" content="Kaalchakra · 4,000 years of India on one map">
+<meta property="og:description" content="Watch empires rise and fall, follow Xuanzang and Ibn Battuta, and find out who ruled your city.">
+<meta property="og:image" content="https://kaalchakra.anokha.space/og/default.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://kaalchakra.anokha.space/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kaalchakra · 4,000 years of India on one map">
+<meta name="twitter:description" content="Watch empires rise and fall, follow Xuanzang and Ibn Battuta, and find out who ruled your city.">
+<meta name="twitter:image" content="https://kaalchakra.anokha.space/og/default.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@500;600;700&family=IM+Fell+English+SC&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=15">
+</head>
+<body>
+<div id="app">
+  <svg id="map" aria-label="Map of the Indian subcontinent"></svg>
+  <div class="band-top" aria-hidden="true"></div>
+  <div class="band-side" aria-hidden="true"></div>
+
+  <header class="brand">
+    <div class="logo">Kaalchakra <span class="deva">कालचक्र</span></div>
+    <div class="tag">An atlas of India, 2600 BCE to 1857</div>
+  </header>
+
+  <section class="yearbox" aria-live="polite">
+    <div id="era" class="era"></div>
+    <div id="year" class="year"></div>
+    <div id="headline" class="headline"></div>
+    <button id="ticker" class="ticker" hidden></button>
+    <button id="cta-home" class="cta">Who ruled your city? <span aria-hidden="true">→</span></button>
+  </section>
+
+  <nav class="actions">
+    <button id="btn-home" class="link">Your city</button>
+    <button id="btn-journeys" class="link">Journeys</button>
+    <button id="btn-share" class="link">Share</button>
+    <button id="btn-about" class="link">About</button>
+    <button id="btn-quiz" class="primary"><span class="d">Daily quiz</span><span class="m">Quiz</span></button>
+  </nav>
+
+  <aside id="legend" class="legend"></aside>
+
+  <section id="card" class="card" hidden></section>
+
+  <footer class="timeline">
+    <button id="play" class="play" aria-label="Play"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-play" d="M5 3.5v9l7.5-4.5z"/><path class="i-pause" d="M4.5 3.5h2.5v9H4.5zM9 3.5h2.5v9H9z"/></svg></button>
+    <div id="track" class="track" role="slider" tabindex="0" aria-label="Year">
+      <div class="eras"></div>
+      <div class="minor"></div>
+      <div class="evdots"></div>
+      <div class="ticks"></div>
+      <div id="handle" class="handle"></div>
+    </div>
+  </footer>
+
+  <div id="intro" class="intro" hidden></div>
+  <div id="modal" class="modal" hidden><div class="modal-inner"></div></div>
+  <div id="toast" class="toast" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="js/data/polities.js?v=15"></script>
+<script src="js/data/places.js?v=15"></script>
+<script src="js/data/stories.js?v=15"></script>
+<script src="js/data/towns.js?v=15"></script>
+<script src="js/engine.js?v=15"></script>
+<script src="js/app.js?v=15"></script>
+</body>
+</html>
